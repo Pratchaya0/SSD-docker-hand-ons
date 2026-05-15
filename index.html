@@ -1,0 +1,1643 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Docker + Docker Compose Hands-On Guide (ภาษาไทย)</title>
+  <style>
+    :root {
+      --bg: #0d1117;
+      --bg2: #161b22;
+      --bg3: #1f2937;
+      --border: #30363d;
+      --accent: #2563eb;
+      --accent2: #3b82f6;
+      --accent-glow: rgba(37,99,235,0.18);
+      --green: #22c55e;
+      --yellow: #eab308;
+      --red: #ef4444;
+      --purple: #a855f7;
+      --cyan: #06b6d4;
+      --orange: #f97316;
+      --text: #e6edf3;
+      --text-muted: #8b949e;
+      --code-bg: #0d1117;
+      --sidebar-w: 280px;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Segoe UI', 'Noto Sans Thai', system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.7;
+      display: flex;
+    }
+
+    /* ── SIDEBAR ── */
+    #sidebar {
+      position: fixed;
+      top: 0; left: 0;
+      width: var(--sidebar-w);
+      height: 100vh;
+      background: var(--bg2);
+      border-right: 1px solid var(--border);
+      overflow-y: auto;
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+    }
+    #sidebar-header {
+      padding: 20px 16px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+    #sidebar-header .logo {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 15px; font-weight: 700; color: var(--accent2);
+      margin-bottom: 4px;
+    }
+    #sidebar-header .logo svg { flex-shrink: 0; }
+    #sidebar-header p { font-size: 11px; color: var(--text-muted); }
+    nav { padding: 12px 0; flex: 1; }
+    nav a {
+      display: flex; align-items: center; gap: 8px;
+      padding: 7px 16px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      text-decoration: none;
+      border-left: 3px solid transparent;
+      transition: all .15s;
+    }
+    nav a:hover, nav a.active {
+      color: var(--text);
+      background: var(--accent-glow);
+      border-left-color: var(--accent2);
+    }
+    nav .section-label {
+      padding: 14px 16px 4px;
+      font-size: 10px;
+      font-weight: 700;
+      letter-spacing: .08em;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    /* ── MAIN ── */
+    #main {
+      margin-left: var(--sidebar-w);
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* ── HERO ── */
+    #hero {
+      background: linear-gradient(135deg, #0d1117 0%, #0f1f3d 50%, #0d1117 100%);
+      border-bottom: 1px solid var(--border);
+      padding: 72px 64px 56px;
+      position: relative;
+      overflow: hidden;
+    }
+    #hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: radial-gradient(ellipse 60% 60% at 70% 50%, rgba(37,99,235,0.13) 0%, transparent 70%);
+    }
+    #hero .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(37,99,235,0.15);
+      border: 1px solid rgba(59,130,246,0.4);
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-size: 12px;
+      color: var(--accent2);
+      margin-bottom: 20px;
+    }
+    #hero h1 {
+      font-size: 42px;
+      font-weight: 800;
+      line-height: 1.2;
+      margin-bottom: 16px;
+      background: linear-gradient(135deg, #e6edf3 0%, #93c5fd 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    #hero p {
+      font-size: 17px;
+      color: var(--text-muted);
+      max-width: 580px;
+      margin-bottom: 32px;
+    }
+    .stack-pills { display: flex; flex-wrap: wrap; gap: 8px; }
+    .pill {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 14px;
+      border-radius: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      border: 1px solid;
+    }
+    .pill.blue   { background: rgba(37,99,235,.15); border-color: rgba(59,130,246,.4); color: #60a5fa; }
+    .pill.green  { background: rgba(34,197,94,.12); border-color: rgba(34,197,94,.4); color: #4ade80; }
+    .pill.yellow { background: rgba(234,179,8,.12); border-color: rgba(234,179,8,.4); color: #facc15; }
+    .pill.purple { background: rgba(168,85,247,.12); border-color: rgba(168,85,247,.4); color: #c084fc; }
+    .pill.cyan   { background: rgba(6,182,212,.12); border-color: rgba(6,182,212,.4); color: #22d3ee; }
+    .pill.orange { background: rgba(249,115,22,.12); border-color: rgba(249,115,22,.4); color: #fb923c; }
+
+    /* ── CONTENT ── */
+    #content { padding: 0 64px 80px; }
+
+    .section {
+      padding-top: 64px;
+    }
+    .section-title {
+      display: flex; align-items: center; gap: 12px;
+      font-size: 26px;
+      font-weight: 700;
+      margin-bottom: 6px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border);
+    }
+    .section-title .icon {
+      width: 38px; height: 38px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .section-subtitle {
+      color: var(--text-muted);
+      font-size: 14px;
+      margin-bottom: 28px;
+    }
+
+    /* Cards */
+    .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; margin-top: 20px; }
+    .card {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      transition: border-color .2s, transform .2s;
+    }
+    .card:hover { border-color: var(--accent2); transform: translateY(-2px); }
+    .card h4 { font-size: 14px; font-weight: 700; margin-bottom: 8px; }
+    .card p, .card li { font-size: 13px; color: var(--text-muted); line-height: 1.6; }
+    .card ul { padding-left: 16px; }
+
+    /* Code blocks */
+    .code-block {
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      margin: 16px 0;
+      overflow: hidden;
+    }
+    .code-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px;
+      background: var(--bg2);
+      border-bottom: 1px solid var(--border);
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .code-header .dots { display: flex; gap: 6px; }
+    .code-header .dots span { width: 10px; height: 10px; border-radius: 50%; }
+    .code-header .dots .r { background: #ef4444; }
+    .code-header .dots .y { background: #eab308; }
+    .code-header .dots .g { background: #22c55e; }
+    .copy-btn {
+      background: none; border: 1px solid var(--border); border-radius: 4px;
+      color: var(--text-muted); padding: 2px 10px; font-size: 11px; cursor: pointer;
+      transition: all .15s;
+    }
+    .copy-btn:hover { background: var(--bg3); color: var(--text); }
+    pre {
+      padding: 18px;
+      font-family: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      overflow-x: auto;
+      color: #e6edf3;
+    }
+    .kw   { color: #ff7b72; }  /* keywords: FROM, RUN, etc */
+    .str  { color: #a5d6ff; }  /* strings */
+    .cmt  { color: #8b949e; font-style: italic; }  /* comments */
+    .val  { color: #79c0ff; }  /* values / flags */
+    .cmd  { color: #ffa657; }  /* commands */
+    .num  { color: #f2cc60; }  /* numbers/ports */
+    .grn  { color: #7ee787; }  /* paths/urls */
+
+    /* Comparison table */
+    .table-wrap { overflow-x: auto; margin-top: 20px; }
+    table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    thead tr { background: var(--bg3); }
+    th { padding: 12px 16px; text-align: left; font-size: 12px; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .05em; }
+    td { padding: 12px 16px; border-top: 1px solid var(--border); }
+    tr:hover td { background: var(--bg2); }
+
+    /* Step list */
+    .steps { counter-reset: step; display: flex; flex-direction: column; gap: 16px; margin-top: 20px; }
+    .step {
+      display: flex; gap: 16px;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+    }
+    .step-num {
+      counter-increment: step;
+      width: 34px; height: 34px;
+      background: linear-gradient(135deg, var(--accent), #1d4ed8);
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: 800;
+      flex-shrink: 0;
+    }
+    .step-num::before { content: counter(step); }
+    .step-body h4 { font-size: 14px; font-weight: 700; margin-bottom: 4px; }
+    .step-body p, .step-body code { font-size: 13px; color: var(--text-muted); }
+    .step-body code {
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 1px 6px;
+      color: var(--cyan);
+      font-family: 'Cascadia Code', monospace;
+      font-size: 12px;
+    }
+
+    /* Info boxes */
+    .info-box {
+      display: flex; gap: 12px;
+      padding: 16px 18px;
+      border-radius: 10px;
+      margin: 16px 0;
+      font-size: 13.5px;
+    }
+    .info-box.tip    { background: rgba(34,197,94,.08); border: 1px solid rgba(34,197,94,.3); }
+    .info-box.warn   { background: rgba(234,179,8,.08); border: 1px solid rgba(234,179,8,.3); }
+    .info-box.danger { background: rgba(239,68,68,.08); border: 1px solid rgba(239,68,68,.3); }
+    .info-box.info   { background: rgba(6,182,212,.08); border: 1px solid rgba(6,182,212,.3); }
+    .info-box .icon-box { font-size: 18px; flex-shrink: 0; margin-top: 1px; }
+    .info-box .content p { line-height: 1.6; }
+    .info-box .content strong { display: block; margin-bottom: 2px; }
+
+    /* Volume type cards */
+    .vol-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-top: 20px; }
+    .vol-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+    .vol-card h4 { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+    .vol-card p  { font-size: 12.5px; color: var(--text-muted); line-height: 1.6; }
+    .vol-card .tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 700; margin-bottom: 8px; }
+
+    /* Network diagram */
+    .net-diagram {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 32px;
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+    }
+    .net-row { display: flex; align-items: center; gap: 0; }
+    .net-box {
+      padding: 12px 20px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 700;
+      text-align: center;
+      min-width: 120px;
+    }
+    .net-arrow { color: var(--text-muted); font-size: 20px; margin: 0 4px; }
+    .net-arrow-v { color: var(--text-muted); font-size: 20px; margin: 4px 0; writing-mode: vertical-rl; transform: rotate(180deg); }
+
+    /* Restart policy table */
+    .policy-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-top: 20px; }
+    .policy-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 12px; padding: 18px; }
+    .policy-card code {
+      display: inline-block;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 3px 10px;
+      font-family: monospace;
+      font-size: 13px;
+      margin-bottom: 8px;
+      color: var(--cyan);
+    }
+    .policy-card p { font-size: 13px; color: var(--text-muted); }
+    .policy-card .rec { font-size: 11px; font-weight: 700; margin-top: 6px; }
+
+    /* Cheatsheet */
+    .cheat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 12px; margin-top: 20px; }
+    .cheat-item {
+      display: flex;
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      overflow: hidden;
+    }
+    .cheat-cmd {
+      background: var(--bg3);
+      border-right: 1px solid var(--border);
+      padding: 12px 14px;
+      font-family: monospace;
+      font-size: 12px;
+      color: var(--orange);
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      min-width: 260px;
+    }
+    .cheat-desc {
+      padding: 12px 14px;
+      font-size: 12.5px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+    }
+
+    /* Progress / TOC */
+    #toc-progress {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+    #toc-progress .bar {
+      height: 3px;
+      background: var(--border);
+      border-radius: 2px;
+      margin-top: 6px;
+    }
+    #toc-progress .fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--cyan));
+      border-radius: 2px;
+      width: 0;
+      transition: width .3s;
+    }
+
+    /* Workshop */
+    .workshop-steps {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 14px;
+      margin-top: 20px;
+    }
+    .ws-step {
+      background: var(--bg2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px;
+      position: relative;
+    }
+    .ws-step .ws-num {
+      position: absolute;
+      top: -12px; left: 16px;
+      background: linear-gradient(135deg, var(--accent), #1d4ed8);
+      border-radius: 50%;
+      width: 24px; height: 24px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 800;
+    }
+    .ws-step h4 { font-size: 13px; font-weight: 700; margin-bottom: 6px; margin-top: 4px; }
+    .ws-step code {
+      display: block;
+      background: var(--bg3);
+      border: 1px solid var(--border);
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-family: monospace;
+      font-size: 12px;
+      color: var(--green);
+      margin-top: 6px;
+      word-break: break-all;
+    }
+    .ws-step p { font-size: 12.5px; color: var(--text-muted); }
+
+    /* Scrollbar */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+    @media (max-width: 900px) {
+      #sidebar { display: none; }
+      #main { margin-left: 0; }
+      #hero { padding: 40px 24px 32px; }
+      #content { padding: 0 24px 60px; }
+      #hero h1 { font-size: 28px; }
+      .vol-grid, .policy-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════
+     SIDEBAR
+════════════════════════════════════════════ -->
+<aside id="sidebar">
+  <div id="sidebar-header">
+    <div class="logo">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+        <rect width="24" height="24" rx="6" fill="#2563eb"/>
+        <path d="M5 13h3v3H5v-3zm4 0h3v3H9v-3zm4 0h3v3h-3v-3zm-8-4h3v3H5V9zm4 0h3v3H9V9zm4 0h3v3h-3V9zm4 0h3v3h-3V9zm-8-4h3v3H9V5zm4 0h3v3h-3V5z" fill="white"/>
+        <path d="M19 13c1.1 0 2-.9 2-2s-.9-2-2-2h-1v-1c0-.55-.45-1-1-1H3c-.55 0-1 .45-1 1v9c0 .55.45 1 1 1h15c.55 0 1-.45 1-1v-1h1z" fill="rgba(255,255,255,0.2)"/>
+      </svg>
+      Docker Hands-On
+    </div>
+    <p>คู่มือภาษาไทย • SSD Python Template</p>
+  </div>
+
+  <nav id="sidenav">
+    <div class="section-label">เริ่มต้น</div>
+    <a href="#intro">📦 Docker คืออะไร?</a>
+
+    <div class="section-label">Dockerfile</div>
+    <a href="#dockerfile">📄 โครงสร้าง Dockerfile</a>
+    <a href="#bestpractice">✅ Best Practices</a>
+    <a href="#commands">⌨️ Docker Commands</a>
+
+    <div class="section-label">Docker Compose</div>
+    <a href="#compose">🔧 Docker Compose คืออะไร?</a>
+    <a href="#compose-yml">📋 compose.yml ของโปรเจกต์</a>
+    <a href="#envvars">⚙️ Environment Variables</a>
+    <a href="#entrypoint">🚀 Entrypoint Script</a>
+
+    <div class="section-label">Volume & Network</div>
+    <a href="#volume">💾 Docker Volume</a>
+    <a href="#volume-project">🗄️ Volume ในโปรเจกต์</a>
+    <a href="#network">🌐 Docker Network</a>
+    <a href="#network-project">🔗 Network ในโปรเจกต์</a>
+
+    <div class="section-label">Production</div>
+    <a href="#backup-db">🗃️ Backup PostgreSQL</a>
+    <a href="#backup-vol">📦 Backup Volumes & Logs</a>
+    <a href="#restart">♻️ Restart Policy</a>
+    <a href="#deploy">☁️ Deploy บน Server</a>
+    <a href="#autostart">🔄 Auto-Start หลัง Reboot</a>
+
+    <div class="section-label">Workshop</div>
+    <a href="#workshop">🛠️ Workshop: รัน Stack จริง</a>
+    <a href="#cheatsheet">📌 Cheatsheet</a>
+    <a href="#summary">🎯 สรุป</a>
+  </nav>
+
+  <div id="toc-progress">
+    <span id="progress-label">Reading progress</span>
+    <div class="bar"><div class="fill" id="progress-fill"></div></div>
+  </div>
+</aside>
+
+<!-- ════════════════════════════════════════════
+     MAIN
+════════════════════════════════════════════ -->
+<main id="main">
+
+  <!-- HERO -->
+  <section id="hero">
+    <div class="badge">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10"/></svg>
+      Hands-On Guide • ภาษาไทย
+    </div>
+    <h1>Docker + Docker Compose<br/>Hands-On Guide</h1>
+    <p>คู่มือปฏิบัติจริงสำหรับนักพัฒนา Python โดยใช้โปรเจกต์ SSD Python Starter Template เรียนรู้ผ่านโค้ดและคำสั่งจริง</p>
+    <div class="stack-pills">
+      <span class="pill blue">🐳 Docker</span>
+      <span class="pill blue">🔧 Docker Compose</span>
+      <span class="pill green">⚡ FastAPI</span>
+      <span class="pill yellow">🐘 PostgreSQL 16</span>
+      <span class="pill purple">📨 NATS</span>
+      <span class="pill cyan">🐍 Python 3.12</span>
+      <span class="pill orange">📦 uv</span>
+    </div>
+  </section>
+
+  <div id="content">
+
+    <!-- ═══════════════════════════════════════
+         1. DOCKER คืออะไร
+    ═══════════════════════════════════════ -->
+    <section class="section" id="intro">
+      <div class="section-title">
+        <div class="icon" style="background:rgba(37,99,235,.2)">📦</div>
+        Docker คืออะไร?
+      </div>
+      <p class="section-subtitle">ทำความเข้าใจแนวคิดพื้นฐานก่อนเริ่มใช้งาน</p>
+
+      <div class="card-grid">
+        <div class="card">
+          <h4>🐳 Container คืออะไร?</h4>
+          <p>Container คือ package ที่บรรจุ Application + ทุกสิ่งที่ต้องการให้รันได้ทันที ไม่ว่าจะอยู่บน Linux, Mac, Windows หรือ Cloud</p>
+        </div>
+        <div class="card">
+          <h4>⚡ เร็วกว่า Virtual Machine</h4>
+          <p>VM ต้องรัน OS เต็มๆ ทำให้หนักและช้า Docker ใช้ kernel ของ host จึงเบากว่า เร็วกว่า และใช้ RAM น้อยกว่ามาก</p>
+        </div>
+        <div class="card">
+          <h4>🌍 Build once, run anywhere</h4>
+          <p>Build image ครั้งเดียว รันได้ทุกที่ที่ติดตั้ง Docker แก้ปัญหา "มันรันได้บนเครื่องฉัน" ตลอดกาล</p>
+        </div>
+        <div class="card">
+          <h4>🔒 แยก Environment สมบูรณ์</h4>
+          <p>แต่ละ container มี environment เป็นของตัวเอง ไม่กระทบ host และไม่กระทบ container อื่น</p>
+        </div>
+      </div>
+
+      <div class="table-wrap" style="margin-top:24px">
+        <table>
+          <thead><tr><th>หัวข้อ</th><th>Docker Container</th><th>Virtual Machine</th></tr></thead>
+          <tbody>
+            <tr><td>การเริ่มต้น</td><td style="color:var(--green)">⚡ มิลลิวินาที</td><td style="color:var(--red)">🐢 นาที</td></tr>
+            <tr><td>ขนาด</td><td style="color:var(--green)">MB</td><td style="color:var(--red)">GB</td></tr>
+            <tr><td>การแยก</td><td>Process-level</td><td>Hardware-level</td></tr>
+            <tr><td>OS</td><td>ใช้ kernel ของ Host</td><td>OS แยกต่างหาก</td></tr>
+            <tr><td>ความเหมาะสม</td><td style="color:var(--green)">✅ Dev + Production</td><td>Testing OS</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="info-box info" style="margin-top:20px">
+        <div class="icon-box">💡</div>
+        <div class="content">
+          <strong>Components หลักของ Docker</strong>
+          <p><strong>Image</strong> — Blueprint ของ container (read-only) &nbsp;•&nbsp; <strong>Container</strong> — Instance ที่กำลังรันจาก Image &nbsp;•&nbsp; <strong>Registry</strong> — คลัง Image (เช่น Docker Hub, ghcr.io) &nbsp;•&nbsp; <strong>Volume</strong> — พื้นที่เก็บข้อมูลถาวร &nbsp;•&nbsp; <strong>Network</strong> — ระบบ network ภายใน</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         2. DOCKERFILE
+    ═══════════════════════════════════════ -->
+    <section class="section" id="dockerfile">
+      <div class="section-title">
+        <div class="icon" style="background:rgba(6,182,212,.2)">📄</div>
+        โครงสร้าง Dockerfile
+      </div>
+      <p class="section-subtitle">ไฟล์ Dockerfile จริงของโปรเจกต์ SSD Python Starter Template</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+            <span>Dockerfile</span>
+          </div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="cmt"># Python API container image.</span>
+<span class="cmt"># Build: docker build -t python-api .</span>
+<span class="cmt"># Run:   docker compose up --build</span>
+
+<span class="kw">FROM</span> <span class="grn">python:3.12-slim</span>
+
+<span class="kw">ENV</span> <span class="val">PYTHONDONTWRITEBYTECODE</span>=<span class="num">1</span> \
+    <span class="val">PYTHONUNBUFFERED</span>=<span class="num">1</span> \
+    <span class="val">UV_LINK_MODE</span>=copy \
+    <span class="val">PYTHONPATH</span>=<span class="grn">/app</span>
+
+<span class="kw">RUN</span> useradd --create-home appuser
+<span class="kw">WORKDIR</span> <span class="grn">/app</span>
+
+<span class="cmt"># ติดตั้ง uv จาก distroless image (fast Python package manager)</span>
+<span class="kw">COPY</span> --from=<span class="grn">ghcr.io/astral-sh/uv:latest</span> /uv /uvx <span class="grn">/bin/</span>
+
+<span class="cmt"># Copy ไฟล์ metadata + source code ก่อน sync</span>
+<span class="kw">COPY</span> pyproject.toml README.md ./
+<span class="kw">COPY</span> app ./app
+<span class="kw">COPY</span> alembic.ini ./alembic.ini
+<span class="kw">COPY</span> alembic ./alembic
+<span class="kw">COPY</span> config ./config
+<span class="kw">COPY</span> scripts ./scripts
+
+<span class="cmt"># ติดตั้ง production dependencies เท่านั้น</span>
+<span class="kw">RUN</span> uv sync <span class="val">--no-dev</span> \
+    && sed -i <span class="str">'s/\r$//'</span> scripts/docker-entrypoint.sh \
+    && chmod +x scripts/docker-entrypoint.sh \
+    && chown -R appuser:appuser <span class="grn">/app</span>
+
+<span class="kw">USER</span> appuser
+<span class="kw">EXPOSE</span> <span class="num">8000</span>
+
+<span class="kw">ENTRYPOINT</span> [<span class="str">"/app/scripts/docker-entrypoint.sh"</span>]</pre>
+      </div>
+
+      <div class="card-grid" style="margin-top:20px">
+        <div class="card">
+          <h4 style="color:var(--cyan)">FROM python:3.12-slim</h4>
+          <p>ใช้ base image ที่เล็กที่สุดเท่าที่จำเป็น (-slim ลดขนาดได้มาก) ไม่มี build tools ที่ไม่จำเป็น</p>
+        </div>
+        <div class="card">
+          <h4 style="color:var(--green)">RUN useradd appuser</h4>
+          <p>สร้าง non-root user เพื่อความปลอดภัย Container ที่รันด้วย root มีความเสี่ยงสูงหาก exploit ได้</p>
+        </div>
+        <div class="card">
+          <h4 style="color:var(--purple)">COPY --from=uv</h4>
+          <p>ใช้ multi-stage COPY เพื่อดึง uv binary จาก official image โดยไม่ต้องติดตั้ง pip หรือ curl</p>
+        </div>
+        <div class="card">
+          <h4 style="color:var(--orange)">uv sync --no-dev</h4>
+          <p>ติดตั้งเฉพาะ production dependencies ไม่รวม dev tools ทำให้ image เล็กและปลอดภัยขึ้น</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         3. BEST PRACTICES
+    ═══════════════════════════════════════ -->
+    <section class="section" id="bestpractice">
+      <div class="section-title">
+        <div class="icon" style="background:rgba(34,197,94,.2)">✅</div>
+        Best Practices ใน Dockerfile
+      </div>
+      <p class="section-subtitle">หลักปฏิบัติที่ดีที่โปรเจกต์นี้ทำตาม</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <h4>ใช้ slim image</h4>
+            <p>เลือก <code>python:3.12-slim</code> แทน <code>python:3.12</code> ลดขนาด image ได้ ~600MB โหลดเร็วขึ้น deploy เร็วขึ้น</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <h4>สร้าง non-root user (appuser)</h4>
+            <p>รัน container ด้วย user ที่ไม่ใช่ root ลดความเสี่ยงกรณี container ถูก exploit</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <h4>Copy dependency files ก่อน source code</h4>
+            <p>Docker cache layer ตามลำดับ COPY — ถ้า <code>pyproject.toml</code> ไม่เปลี่ยน layer ของ <code>uv sync</code> จะถูก cache ทำให้ build เร็วมากขึ้น</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <h4>ติดตั้งเฉพาะ production dependencies</h4>
+            <p><code>uv sync --no-dev</code> ไม่ติดตั้ง pytest, mypy, black หรือ dev tools อื่นๆ image เล็กลงและไม่มี surface attack เพิ่ม</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <h4>ใช้ ENTRYPOINT สำหรับ startup script</h4>
+            <p>ENTRYPOINT ให้ความยืดหยุ่นกว่า CMD สำหรับ script ที่ต้องทำ migration ก่อน start server</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <h4>ใช้ .dockerignore</h4>
+            <p>ไม่รวม <code>.venv</code>, <code>.git</code>, <code>tests/</code>, <code>.cursor/</code> ใน build context ทำให้ <code>docker build</code> เร็วขึ้นมาก</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         4. DOCKER COMMANDS
+    ═══════════════════════════════════════ -->
+    <section class="section" id="commands">
+      <div class="section-title">
+        <div class="icon" style="background:rgba(249,115,22,.2)">⌨️</div>
+        Docker Commands พื้นฐาน
+      </div>
+      <p class="section-subtitle">คำสั่งที่ใช้บ่อยสำหรับจัดการ Image และ Container</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+            <span>Terminal</span>
+          </div>
+        </div>
+        <pre><span class="cmt"># ── Build & Run ──────────────────────────────</span>
+<span class="cmd">docker build</span> -t python-api .               <span class="cmt"># build image</span>
+<span class="cmd">docker run</span>   -p <span class="num">8000</span>:<span class="num">8000</span> python-api       <span class="cmt"># รัน container</span>
+<span class="cmd">docker run</span>   -d -p <span class="num">8000</span>:<span class="num">8000</span> python-api    <span class="cmt"># รันใน background</span>
+
+<span class="cmt"># ── Inspect ──────────────────────────────────</span>
+<span class="cmd">docker ps</span>                                   <span class="cmt"># ดู running containers</span>
+<span class="cmd">docker ps</span> -a                               <span class="cmt"># ดูทุก container (รวม stopped)</span>
+<span class="cmd">docker logs</span> &lt;container_id&gt;                 <span class="cmt"># ดู logs</span>
+<span class="cmd">docker logs</span> -f &lt;container_id&gt;              <span class="cmt"># ติดตาม logs แบบ real-time</span>
+<span class="cmd">docker inspect</span> &lt;container_id&gt;              <span class="cmt"># ดูรายละเอียดทั้งหมด</span>
+
+<span class="cmt"># ── Shell ─────────────────────────────────────</span>
+<span class="cmd">docker exec</span> -it &lt;container_id&gt; sh          <span class="cmt"># เข้า shell ใน container</span>
+<span class="cmd">docker exec</span> -it &lt;container_id&gt; bash        <span class="cmt"># เข้า bash (ถ้ามี)</span>
+
+<span class="cmt"># ── Stop & Remove ────────────────────────────</span>
+<span class="cmd">docker stop</span> &lt;container_id&gt;                 <span class="cmt"># หยุด container</span>
+<span class="cmd">docker rm</span>   &lt;container_id&gt;                 <span class="cmt"># ลบ container</span>
+<span class="cmd">docker rm</span>   -f &lt;container_id&gt;              <span class="cmt"># หยุดและลบพร้อมกัน</span>
+
+<span class="cmt"># ── Images ───────────────────────────────────</span>
+<span class="cmd">docker images</span>                              <span class="cmt"># ดู images ทั้งหมด</span>
+<span class="cmd">docker rmi</span>  python-api                     <span class="cmt"># ลบ image</span>
+<span class="cmd">docker system prune</span> -a                     <span class="cmt"># ล้าง image/container ที่ไม่ใช้</span></pre>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         5. DOCKER COMPOSE
+    ═══════════════════════════════════════ -->
+    <section class="section" id="compose">
+      <div class="section-title">
+        <div class="icon" style="background:rgba(168,85,247,.2)">🔧</div>
+        Docker Compose คืออะไร?
+      </div>
+      <p class="section-subtitle">เครื่องมือจัดการหลาย containers พร้อมกันใน 1 ไฟล์</p>
+
+      <div class="card-grid">
+        <div class="card">
+          <h4>📄 1 ไฟล์ ทุก Service</h4>
+          <p>กำหนด api, postgres, nats และทุกอย่างใน <code>compose.yml</code> ไฟล์เดียว version control ได้ง่าย</p>
+        </div>
+        <div class="card">
+          <h4>🔗 จัดการ Dependencies</h4>
+          <p><code>depends_on</code> บอก Compose ว่าต้องรอ service ไหนให้ healthy ก่อน เช่น api รอ postgres</p>
+        </div>
+        <div class="card">
+          <h4>🌐 Network อัตโนมัติ</h4>
+          <p>Compose สร้าง network ภายในให้อัตโนมัติ ทุก service คุยกันผ่านชื่อ service ได้ทันที</p>
+        </div>
+        <div class="card">
+          <h4>💾 Volume อัตโนมัติ</h4>
+          <p>ประกาศ named volumes ระดับ top-level Compose จัดการให้ทั้งหมด ไม่ต้องสร้าง volume เอง</p>
+        </div>
+      </div>
+
+      <div class="info-box tip" style="margin-top:20px">
+        <div class="icon-box">🚀</div>
+        <div class="content">
+          <strong>คำสั่งหลัก</strong>
+          <p><code style="background:var(--bg3);padding:2px 8px;border-radius:4px;color:var(--green);font-family:monospace">docker compose up --build</code> &nbsp;—&nbsp; Build image ใหม่และรัน stack ทั้งหมด &nbsp;|&nbsp; <code style="background:var(--bg3);padding:2px 8px;border-radius:4px;color:var(--red);font-family:monospace">docker compose down</code> &nbsp;—&nbsp; หยุดและลบ containers ทั้งหมด</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         6. COMPOSE.YML
+    ═══════════════════════════════════════ -->
+    <section class="section" id="compose-yml">
+      <div class="section-title">
+        <div class="icon" style="background:rgba(234,179,8,.2)">📋</div>
+        compose.yml ของโปรเจกต์
+      </div>
+      <p class="section-subtitle">ไฟล์ compose.yml จริงที่ใช้รัน 3 services: api + postgres + nats</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+            <span>compose.yml</span>
+          </div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre>services:
+  <span class="val">api</span>:
+    build: .
+    ports:
+      - <span class="str">"8000:8000"</span>
+    environment:
+      APP_ENV: docker
+      LOG_LEVEL: INFO
+      DATABASE_URL: <span class="grn">postgresql+asyncpg://app:app@postgres:5432/app</span>
+      BROKER_URL: <span class="grn">nats://nats:4222</span>
+      ENABLE_SCHEDULER: <span class="str">"true"</span>
+    depends_on:
+      postgres:
+        condition: <span class="val">service_healthy</span>    <span class="cmt"># รอให้ postgres ผ่าน healthcheck</span>
+      nats:
+        condition: <span class="val">service_started</span>
+    restart: <span class="val">unless-stopped</span>
+
+  <span class="val">postgres</span>:
+    image: <span class="grn">postgres:16-alpine</span>
+    ports:
+      - <span class="str">"${POSTGRES_HOST_PORT:-5433}:5432"</span>
+    environment:
+      POSTGRES_USER: app
+      POSTGRES_PASSWORD: app
+      POSTGRES_DB: app
+    volumes:
+      - <span class="grn">postgres_data:/var/lib/postgresql/data</span>
+    healthcheck:
+      test: [<span class="str">"CMD-SHELL"</span>, <span class="str">"pg_isready -U app -d app"</span>]
+      interval: <span class="num">5s</span>
+      timeout: <span class="num">3s</span>
+      retries: <span class="num">10</span>
+    restart: <span class="val">unless-stopped</span>
+
+  <span class="val">nats</span>:
+    image: <span class="grn">nats:2-alpine</span>
+    command: [<span class="str">"-m"</span>, <span class="str">"8222"</span>]
+    restart: <span class="val">unless-stopped</span>
+
+<span class="kw">volumes</span>:
+  <span class="val">postgres_data</span>:                            <span class="cmt"># named volume — docker ดูแลให้</span></pre>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         7. ENV VARS
+    ═══════════════════════════════════════ -->
+    <section class="section" id="envvars">
+      <div class="section-title">
+        <div class="icon" style="background:rgba(6,182,212,.2)">⚙️</div>
+        Environment Variables & Configuration
+      </div>
+      <p class="section-subtitle">ตัวแปร environment ที่ใช้ใน stack และลำดับความสำคัญ</p>
+
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Variable</th><th>ค่าใน compose.yml</th><th>คำอธิบาย</th></tr></thead>
+          <tbody>
+            <tr><td><code style="color:var(--cyan);font-family:monospace">DATABASE_URL</code></td><td><code style="font-family:monospace;font-size:11px">postgresql+asyncpg://app:app@postgres:5432/app</code></td><td>ต่อ PostgreSQL ใน stack</td></tr>
+            <tr><td><code style="color:var(--cyan);font-family:monospace">BROKER_URL</code></td><td><code style="font-family:monospace">nats://nats:4222</code></td><td>ต่อ NATS broker</td></tr>
+            <tr><td><code style="color:var(--cyan);font-family:monospace">APP_ENV</code></td><td><code style="font-family:monospace">docker</code></td><td>ระบุ environment</td></tr>
+            <tr><td><code style="color:var(--cyan);font-family:monospace">LOG_LEVEL</code></td><td><code style="font-family:monospace">INFO</code></td><td>ระดับ log</td></tr>
+            <tr><td><code style="color:var(--cyan);font-family:monospace">ENABLE_SCHEDULER</code></td><td><code style="font-family:monospace">true</code></td><td>เปิด APScheduler</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="info-box warn" style="margin-top:20px">
+        <div class="icon-box">⚠️</div>
+        <div class="content">
+          <strong>ลำดับความสำคัญ (สูง → ต่ำ)</strong>
+          <p>.env file → process environment → compose.yml → config/settings.yaml → built-in defaults<br/>
+          <strong>ห้าม</strong>ใส่ password, private key หรือ client secret ใน compose.yml — ใช้ .env file หรือ secret store สำหรับ production</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         8. ENTRYPOINT
+    ═══════════════════════════════════════ -->
+    <section class="section" id="entrypoint">
+      <div class="section-title">
+        <div class="icon" style="background:rgba(34,197,94,.2)">🚀</div>
+        Entrypoint Script — ลำดับการทำงาน
+      </div>
+      <p class="section-subtitle">scripts/docker-entrypoint.sh รันทุกครั้งที่ container เริ่มทำงาน</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+            <span>scripts/docker-entrypoint.sh</span>
+          </div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="kw">#!/usr/bin/env sh</span>
+<span class="cmt"># Container entrypoint: apply DB migrations, then exec the API server.</span>
+<span class="kw">set</span> -eu
+
+<span class="kw">if</span> [ -n <span class="str">"${DATABASE_URL:-}"</span> ]; <span class="kw">then</span>
+  echo <span class="str">"[entrypoint] Applying Alembic migrations..."</span>
+  uv run alembic upgrade head           <span class="cmt"># ← apply migrations ก่อนเสมอ</span>
+<span class="kw">else</span>
+  echo <span class="str">"[entrypoint] DATABASE_URL not set; skipping migrations."</span>
+<span class="kw">fi</span>
+
+echo <span class="str">"[entrypoint] Starting API on 0.0.0.0:8000"</span>
+<span class="kw">exec</span> uv run uvicorn app.main:app \
+    <span class="val">--host</span> <span class="num">0.0.0.0</span> \
+    <span class="val">--port</span> <span class="num">8000</span></pre>
+      </div>
+
+      <div class="steps" style="margin-top:16px">
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <h4>postgres พร้อมก่อน (depends_on + healthcheck)</h4>
+            <p>Compose ไม่เริ่ม api จนกว่า postgres จะผ่าน <code>pg_isready</code> ทำให้ alembic เชื่อมต่อได้ทันที</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <h4>uv run alembic upgrade head</h4>
+            <p>Apply database migrations อัตโนมัติทุกครั้งที่ deploy ไม่ต้องรัน migration แยกต่างหาก</p>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <h4>exec uvicorn app.main:app</h4>
+            <p>รัน FastAPI server ด้วย exec เพื่อให้ uvicorn เป็น PID 1 รับ signal ได้ถูกต้อง (graceful shutdown)</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         9. DOCKER VOLUME
+    ═══════════════════════════════════════ -->
+    <section class="section" id="volume">
+      <div class="section-title">
+        <div class="icon" style="background:rgba(234,179,8,.2)">💾</div>
+        Docker Volume คืออะไร?
+      </div>
+      <p class="section-subtitle">พื้นที่เก็บข้อมูลถาวรที่แยกออกจาก container lifecycle</p>
+
+      <div class="info-box warn">
+        <div class="icon-box">⚠️</div>
+        <div class="content">
+          <strong>ปัญหาหากไม่ใช้ Volume</strong>
+          <p>ข้อมูลทั้งหมดใน container จะ<strong>หายไป</strong>เมื่อ container ถูกลบหรือ recreate — ไม่ว่าจะเป็น database, uploaded files, หรือ logs</p>
+        </div>
+      </div>
+
+      <div class="vol-grid">
+        <div class="vol-card" style="border-color:rgba(59,130,246,.4)">
+          <span class="tag" style="background:rgba(37,99,235,.2);color:#60a5fa">Named Volume</span>
+          <h4>🐳 Docker ดูแลให้</h4>
+          <p>Docker จัดการตำแหน่งจัดเก็บบน host เอง เหมาะสำหรับ database data ที่ต้องการความถาวร</p>
+          <div class="code-block" style="margin-top:10px">
+            <pre style="padding:10px;font-size:11px">volumes:
+  postgres_data:</pre>
+          </div>
+        </div>
+        <div class="vol-card" style="border-color:rgba(34,197,94,.4)">
+          <span class="tag" style="background:rgba(34,197,94,.2);color:#4ade80">Bind Mount</span>
+          <h4>📁 Mount จาก Host</h4>
+          <p>Map โฟลเดอร์บน host เข้าไปใน container เหมาะสำหรับ development หรือ log files</p>
+          <div class="code-block" style="margin-top:10px">
+            <pre style="padding:10px;font-size:11px">volumes:
+  - ./logs:/app/logs</pre>
+          </div>
+        </div>
+        <div class="vol-card" style="border-color:rgba(168,85,247,.4)">
+          <span class="tag" style="background:rgba(168,85,247,.2);color:#c084fc">tmpfs</span>
+          <h4>⚡ In-Memory</h4>
+          <p>เก็บข้อมูลใน RAM เท่านั้น เร็วมากแต่หายเมื่อ container หยุด เหมาะสำหรับ temp files</p>
+          <div class="code-block" style="margin-top:10px">
+            <pre style="padding:10px;font-size:11px">tmpfs:
+  - /tmp</pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         10. VOLUME ในโปรเจกต์
+    ═══════════════════════════════════════ -->
+    <section class="section" id="volume-project">
+      <div class="section-title">
+        <div class="icon" style="background:rgba(234,179,8,.2)">🗄️</div>
+        Volume ในโปรเจกต์นี้
+      </div>
+      <p class="section-subtitle">การใช้งาน Volume จริงใน SSD Python Starter Template</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+            <span>compose.yml — Volume section</span>
+          </div>
+        </div>
+        <pre><span class="cmt"># Named volume สำหรับ PostgreSQL data</span>
+services:
+  postgres:
+    volumes:
+      - <span class="grn">postgres_data:/var/lib/postgresql/data</span>
+
+  <span class="cmt"># Bind mount สำหรับ logs (เพิ่มได้ใน api service)</span>
+  api:
+    volumes:
+      - <span class="grn">./logs:/app/logs</span>   <span class="cmt"># เก็บ log ข้ามการ restart</span>
+
+<span class="cmt"># ประกาศ named volume ระดับ top-level</span>
+<span class="kw">volumes</span>:
+  <span class="val">postgres_data</span>:       <span class="cmt"># Docker จัดการให้อัตโนมัติ</span></pre>
+      </div>
+
+      <div class="card-grid" style="margin-top:20px">
+        <div class="card">
+          <h4 style="color:var(--cyan)">ดู Volumes</h4>
+          <div class="code-block" style="margin-top:8px">
+            <pre style="padding:10px;font-size:12px"><span class="cmd">docker volume ls</span>
+<span class="cmd">docker volume inspect</span> postgres_data</pre>
+          </div>
+        </div>
+        <div class="card">
+          <h4 style="color:var(--red)">ลบ Volume (ล้างข้อมูล)</h4>
+          <div class="code-block" style="margin-top:8px">
+            <pre style="padding:10px;font-size:12px"><span class="cmd">docker compose down</span> -v
+<span class="cmt"># ⚠️ ข้อมูลหายถาวร!</span></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         11. DOCKER NETWORK
+    ═══════════════════════════════════════ -->
+    <section class="section" id="network">
+      <div class="section-title">
+        <div class="icon" style="background:rgba(6,182,212,.2)">🌐</div>
+        Docker Network คืออะไร?
+      </div>
+      <p class="section-subtitle">ระบบ network ภายในที่ให้ containers คุยหากัน</p>
+
+      <div class="card-grid">
+        <div class="card" style="border-color:rgba(59,130,246,.4)">
+          <h4 style="color:var(--accent2)">🌉 bridge (Default)</h4>
+          <p>Network mode เริ่มต้นสำหรับ Docker Compose ทุก container ในโปรเจกต์เดียวกันอยู่ใน bridge network เดียวกัน คุยกันผ่านชื่อ service ได้</p>
+        </div>
+        <div class="card">
+          <h4 style="color:var(--orange)">🔗 host</h4>
+          <p>Container ใช้ network ของ host โดยตรง ไม่มี isolation เหมาะสำหรับ performance-sensitive scenarios</p>
+        </div>
+        <div class="card">
+          <h4 style="color:var(--text-muted)">🚫 none</h4>
+          <p>ไม่มี network เลย container ถูก isolate สมบูรณ์ เหมาะสำหรับ batch processing ที่ไม่ต้องการ network</p>
+        </div>
+      </div>
+
+      <div class="net-diagram">
+        <p style="font-size:12px;color:var(--text-muted);margin-bottom:20px;align-self:flex-start">🌐 Docker Compose Internal Network (bridge)</p>
+        <div class="net-row">
+          <div class="net-box" style="background:rgba(37,99,235,.2);border:1px solid rgba(59,130,246,.5)">
+            🌍 Browser / Client<br/><small style="color:var(--text-muted)">host:8000</small>
+          </div>
+          <div class="net-arrow">→</div>
+          <div class="net-box" style="background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.5)">
+            ⚡ api<br/><small style="color:var(--text-muted)">:8000</small>
+          </div>
+          <div class="net-arrow">→</div>
+          <div class="net-box" style="background:rgba(234,179,8,.15);border:1px solid rgba(234,179,8,.5)">
+            🐘 postgres<br/><small style="color:var(--text-muted)">:5432</small>
+          </div>
+        </div>
+        <div style="margin-left:280px;margin-top:-6px;height:40px;width:2px;background:rgba(168,85,247,.5);margin-bottom:-6px"></div>
+        <div class="net-row">
+          <div style="width:280px"></div>
+          <div class="net-box" style="background:rgba(168,85,247,.15);border:1px solid rgba(168,85,247,.5)">
+            📨 nats<br/><small style="color:var(--text-muted)">:4222</small>
+          </div>
+        </div>
+        <p style="font-size:11px;color:var(--text-muted);margin-top:20px">Services ใช้ชื่อ service เป็น hostname: <code style="color:var(--cyan)">postgres</code>, <code style="color:var(--cyan)">nats</code>, <code style="color:var(--cyan)">api</code></p>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         12. NETWORK ในโปรเจกต์
+    ═══════════════════════════════════════ -->
+    <section class="section" id="network-project">
+      <div class="section-title">
+        <div class="icon" style="background:rgba(6,182,212,.2)">🔗</div>
+        Network ในโปรเจกต์นี้
+      </div>
+      <p class="section-subtitle">วิธีที่ services ติดต่อกันผ่านชื่อ service ใน stack</p>
+
+      <div class="info-box info">
+        <div class="icon-box">💡</div>
+        <div class="content">
+          <strong>กฎสำคัญ: ใช้ชื่อ service เป็น hostname ไม่ใช่ localhost</strong>
+          <p>ภายใน Docker network ชื่อ service ถูก resolve เป็น IP อัตโนมัติ ดังนั้น api ต้องเชื่อมต่อ <code style="color:var(--cyan)">postgres:5432</code> ไม่ใช่ <code style="color:var(--red)">localhost:5432</code></p>
+        </div>
+      </div>
+
+      <div class="code-block" style="margin-top:16px">
+        <div class="code-header">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+            <span>Environment Variables ใน api service</span>
+          </div>
+        </div>
+        <pre>DATABASE_URL: <span class="grn">postgresql+asyncpg://app:app@<span class="val">postgres</span>:5432/app</span>
+<span class="cmt">#                                              ↑ ชื่อ service ไม่ใช่ localhost!</span>
+
+BROKER_URL:   <span class="grn">nats://<span class="val">nats</span>:4222</span>
+<span class="cmt">#                    ↑ ชื่อ service ของ NATS</span></pre>
+      </div>
+
+      <div class="table-wrap" style="margin-top:20px">
+        <table>
+          <thead><tr><th>Port Mapping</th><th>จาก Host</th><th>เข้าถึง Container</th><th>ใช้งาน</th></tr></thead>
+          <tbody>
+            <tr><td><code style="font-family:monospace">8000:8000</code></td><td>localhost:8000</td><td>api:8000</td><td>เข้า Swagger, API</td></tr>
+            <tr><td><code style="font-family:monospace">5433:5432</code></td><td>localhost:5433</td><td>postgres:5432</td><td>เชื่อมด้วย DB client</td></tr>
+            <tr><td>(ไม่ publish)</td><td>—</td><td>nats:4222</td><td>เฉพาะ api ใน stack</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         13. BACKUP DB
+    ═══════════════════════════════════════ -->
+    <section class="section" id="backup-db">
+      <div class="section-title">
+        <div class="icon" style="background:rgba(239,68,68,.2)">🗃️</div>
+        Backup — สำรองข้อมูล PostgreSQL
+      </div>
+      <p class="section-subtitle">วิธีสำรองและ restore ข้อมูล PostgreSQL ผ่าน docker exec</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+            <span>Backup Commands</span>
+          </div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="cmt"># ── Backup SQL (plain text) ──────────────────────</span>
+<span class="cmd">docker exec</span> postgres \
+    pg_dump <span class="val">-U</span> app app \
+    > backup_$(date +%Y%m%d).sql
+
+<span class="cmt"># ── Backup binary format (เร็วกว่า, เล็กกว่า) ─────</span>
+<span class="cmd">docker exec</span> postgres \
+    pg_dump <span class="val">-U</span> app <span class="val">-Fc</span> app \
+    > backup_$(date +%Y%m%d).dump
+
+<span class="cmt"># ── Restore จาก SQL ──────────────────────────────</span>
+<span class="cmd">docker exec</span> -i postgres \
+    psql <span class="val">-U</span> app app \
+    < backup_20260515.sql
+
+<span class="cmt"># ── Restore จาก binary ───────────────────────────</span>
+<span class="cmd">docker exec</span> -i postgres \
+    pg_restore <span class="val">-U</span> app <span class="val">-d</span> app \
+    < backup_20260515.dump</pre>
+      </div>
+
+      <div class="card-grid" style="margin-top:20px">
+        <div class="card">
+          <h4>⏰ Automated Backup ด้วย cron</h4>
+          <p>เพิ่ม cron job บน host server เพื่อ backup อัตโนมัติทุกวัน</p>
+          <div class="code-block" style="margin-top:8px">
+            <pre style="padding:10px;font-size:11px"><span class="cmt"># crontab -e</span>
+0 2 * * * docker exec postgres \
+  pg_dump -U app app \
+  > /backups/db_$(date +%Y%m%d).sql</pre>
+          </div>
+        </div>
+        <div class="card">
+          <h4>☁️ อัปโหลดไป Cloud Storage</h4>
+          <p>ส่ง backup ไปยัง S3, GCS หรือ Azure Blob Storage อัตโนมัติหลัง backup</p>
+          <div class="code-block" style="margin-top:8px">
+            <pre style="padding:10px;font-size:11px"><span class="cmt"># ส่งไป S3</span>
+aws s3 cp backup.sql \
+  s3://my-bucket/db/</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box danger" style="margin-top:16px">
+        <div class="icon-box">🚨</div>
+        <div class="content">
+          <strong>กฎการ Backup</strong>
+          <p>1. เก็บ backup <strong>นอก container เสมอ</strong> — container อาจถูกลบได้ตลอดเวลา &nbsp;|&nbsp; 2. <strong>ทดสอบ restore</strong> สม่ำเสมอ — backup ที่ restore ไม่ได้คือไม่มี backup &nbsp;|&nbsp; 3. เก็บ backup ไว้ <strong>อย่างน้อย 3 ที่</strong> (3-2-1 rule)</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         14. BACKUP VOLUMES
+    ═══════════════════════════════════════ -->
+    <section class="section" id="backup-vol">
+      <div class="section-title">
+        <div class="icon" style="background:rgba(239,68,68,.2)">📦</div>
+        Backup — สำรอง Volumes และ Logs
+      </div>
+      <p class="section-subtitle">วิธีสำรอง Named Volume และ log files</p>
+
+      <div class="code-block">
+        <div class="code-header">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+            <span>Volume Backup Commands</span>
+          </div>
+          <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        </div>
+        <pre><span class="cmt"># ── Backup Named Volume → tar.gz ─────────────────</span>
+<span class="cmd">docker run</span> --rm \
+    -v <span class="grn">postgres_data:/data</span> \
+    -v <span class="grn">$(pwd):/backup</span> \
+    alpine \
+    tar czf <span class="grn">/backup/pg_data_$(date +%Y%m%d).tar.gz</span> /data
+
+<span class="cmt"># ── Restore Volume จาก tar.gz ─────────────────────</span>
+<span class="cmd">docker run</span> --rm \
+    -v <span class="grn">postgres_data:/data</span> \
+    -v <span class="grn">$(pwd):/backup</span> \
+    alpine \
+    tar xzf <span class="grn">/backup/pg_data_20260515.tar.gz</span> -C /
+
+<span class="cmt"># ── Backup Log files (Bind Mount) ────────────────</span>
+cp -r ./logs <span class="grn">./logs_backup_$(date +%Y%m%d)</span>
+
+<span class="cmt"># ── Backup config files ───────────────────────────</span>
+tar czf config_backup.tar.gz \
+    config/settings.yaml \
+    .env \
+    compose.yml</pre>
+      </div>
+
+      <div class="info-box tip" style="margin-top:16px">
+        <div class="icon-box">☁️</div>
+        <div class="content">
+          <strong>Cloud Volume Snapshot</strong>
+          <p>สำหรับ production บน cloud ให้ใช้ Volume Snapshot ของ provider แทน เช่น AWS EBS Snapshot, GCP Persistent Disk Snapshot — เร็วกว่า, atomic, และ restore ง่ายกว่า</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         15. RESTART POLICY
+    ═══════════════════════════════════════ -->
+    <section class="section" id="restart">
+      <div class="section-title">
+        <div class="icon" style="background:rgba(168,85,247,.2)">♻️</div>
+        Restart Policy — การรีสตาร์ทอัตโนมัติ
+      </div>
+      <p class="section-subtitle">กำหนดพฤติกรรมเมื่อ container crash หรือ server reboot</p>
+
+      <div class="policy-grid">
+        <div class="policy-card">
+          <code>restart: no</code>
+          <p>ไม่รีสตาร์ทอัตโนมัติในทุกกรณี (default)</p>
+          <p class="rec" style="color:var(--text-muted)">เหมาะสำหรับ: dev, one-off tasks</p>
+        </div>
+        <div class="policy-card" style="border-color:rgba(34,197,94,.4)">
+          <code>restart: unless-stopped</code>
+          <p>รีสตาร์ทเสมอ ยกเว้นถ้า stop ด้วยมือ (docker stop)</p>
+          <p class="rec" style="color:var(--green)">✅ แนะนำสำหรับ production</p>
+        </div>
+        <div class="policy-card">
+          <code>restart: always</code>
+          <p>รีสตาร์ทเสมอแม้แต่ stop ด้วยมือก็ยังกลับมา</p>
+          <p class="rec" style="color:var(--yellow)">⚠️ ระวัง: อาจ restart loop</p>
+        </div>
+        <div class="policy-card">
+          <code>restart: on-failure</code>
+          <p>รีสตาร์ทเฉพาะเมื่อ exit code ไม่ใช่ 0 (crash)</p>
+          <p class="rec" style="color:var(--text-muted)">เหมาะสำหรับ: batch jobs</p>
+        </div>
+      </div>
+
+      <div class="info-box info" style="margin-top:20px">
+        <div class="icon-box">🔍</div>
+        <div class="content">
+          <strong>โปรเจกต์นี้ใช้ unless-stopped</strong>
+          <p>ทั้ง <code style="color:var(--cyan)">api</code> และ <code style="color:var(--cyan)">postgres</code> ใช้ <code style="color:var(--green)">restart: unless-stopped</code> ร่วมกับ <code style="color:var(--cyan)">healthcheck</code> ทำให้ Compose รู้ว่า service พร้อมใช้งานจริงก่อนเริ่ม service ที่ depends on</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         16. DEPLOY
+    ═══════════════════════════════════════ -->
+    <section class="section" id="deploy">
+      <div class="section-title">
+        <div class="icon" style="background:rgba(37,99,235,.2)">☁️</div>
+        Deploy บน Hosting Server (VPS/Cloud)
+      </div>
+      <p class="section-subtitle">ขั้นตอน deploy โปรเจกต์นี้บน Ubuntu/Debian server</p>
+
+      <div class="steps">
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <h4>ติดตั้ง Docker บน server</h4>
+            <div class="code-block" style="margin-top:8px">
+              <pre style="padding:10px;font-size:12px"><span class="cmt"># Ubuntu/Debian — one-liner</span>
+curl -fsSL https://get.docker.com | sh
+<span class="cmd">sudo usermod</span> -aG docker $USER
+<span class="cmt"># logout แล้ว login ใหม่</span></pre>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <h4>Clone repo และตั้งค่า .env</h4>
+            <div class="code-block" style="margin-top:8px">
+              <pre style="padding:10px;font-size:12px"><span class="cmd">git clone</span> https://github.com/your/repo.git /app
+<span class="cmd">cd</span> /app
+cp .env.example .env
+<span class="cmd">nano</span> .env  <span class="cmt"># ใส่ secrets จริง</span></pre>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <h4>รัน Stack ใน background</h4>
+            <div class="code-block" style="margin-top:8px">
+              <pre style="padding:10px;font-size:12px"><span class="cmd">docker compose up</span> -d --build
+<span class="cmd">docker compose ps</span>          <span class="cmt"># ตรวจสอบสถานะ</span>
+<span class="cmd">docker compose logs</span> -f     <span class="cmt"># ดู logs</span></pre>
+            </div>
+          </div>
+        </div>
+        <div class="step">
+          <div class="step-num"></div>
+          <div class="step-body">
+            <h4>ตั้งค่า Nginx / Caddy เป็น Reverse Proxy</h4>
+            <div class="code-block" style="margin-top:8px">
+              <pre style="padding:10px;font-size:12px"><span class="cmt"># Caddyfile (ง่ายที่สุด — auto HTTPS)</span>
+api.example.com {
+    reverse_proxy localhost:<span class="num">8000</span>
+}</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="info-box tip" style="margin-top:16px">
+        <div class="icon-box">🔥</div>
+        <div class="content">
+          <strong>Firewall Setup</strong>
+          <p>เปิดเฉพาะ port ที่จำเป็น: <code style="color:var(--green)">22</code> (SSH), <code style="color:var(--green)">80</code> (HTTP), <code style="color:var(--green)">443</code> (HTTPS) — ปิด port 8000 และ 5433 ไม่ให้เข้าถึงจาก internet โดยตรง</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         17. AUTO-START
+    ═══════════════════════════════════════ -->
+    <section class="section" id="autostart">
+      <div class="section-title">
+        <div class="icon" style="background:rgba(34,197,94,.2)">🔄</div>
+        Auto-Start หลัง Server Reboot
+      </div>
+      <p class="section-subtitle">ทำให้ stack รันอัตโนมัติทุกครั้งที่ server เริ่มใหม่</p>
+
+      <div class="card-grid">
+        <div class="card" style="border-color:rgba(34,197,94,.4)">
+          <h4 style="color:var(--green)">✅ วิธีที่ 1: restart policy (ง่ายที่สุด)</h4>
+          <p style="margin-bottom:10px">Docker daemon เริ่มอัตโนมัติเมื่อ OS boot และ <code style="color:var(--green)">restart: unless-stopped</code> จะรัน container กลับมาเอง</p>
+          <div class="code-block">
+            <pre style="padding:10px;font-size:11px"><span class="cmt"># ตรวจสอบว่า docker daemon auto-start</span>
+<span class="cmd">sudo systemctl enable docker</span>
+<span class="cmd">sudo systemctl status docker</span></pre>
+          </div>
+        </div>
+        <div class="card">
+          <h4>🔧 วิธีที่ 2: systemd service</h4>
+          <p style="margin-bottom:10px">สร้าง systemd service สำหรับ docker compose เพื่อควบคุมได้ละเอียดกว่า</p>
+          <div class="code-block">
+            <pre style="padding:10px;font-size:11px"><span class="cmt"># /etc/systemd/system/myapp.service</span>
+[Unit]
+After=docker.service
+
+[Service]
+WorkingDirectory=<span class="grn">/app</span>
+ExecStart=docker compose up
+ExecStop=docker compose down
+Restart=always
+
+[Install]
+WantedBy=multi-user.target</pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="code-block" style="margin-top:16px">
+        <div class="code-header">
+          <div style="display:flex;align-items:center;gap:10px">
+            <div class="dots"><span class="r"></span><span class="y"></span><span class="g"></span></div>
+            <span>ทดสอบ Auto-Start</span>
+          </div>
+        </div>
+        <pre><span class="cmt"># Enable และ start service</span>
+<span class="cmd">sudo systemctl enable</span> myapp
+<span class="cmd">sudo systemctl start</span> myapp
+
+<span class="cmt"># ทดสอบด้วย reboot จริง</span>
+<span class="cmd">sudo reboot</span>
+
+<span class="cmt"># หลัง reboot — ตรวจสอบ</span>
+<span class="cmd">docker compose ps</span>          <span class="cmt"># ต้องเห็น services running</span>
+<span class="cmd">docker compose logs</span> --tail=20</pre>
+      </div>
+
+      <div class="info-box tip" style="margin-top:16px">
+        <div class="icon-box">🤖</div>
+        <div class="content">
+          <strong>Watchtower — Auto-update Images</strong>
+          <p>เพิ่ม Watchtower ใน compose.yml เพื่อให้ดึง image ใหม่และ restart container อัตโนมัติเมื่อมีอัปเดต เหมาะสำหรับ staging environment</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         18. WORKSHOP
+    ═══════════════════════════════════════ -->
+    <section class="section" id="workshop">
+      <div class="section-title">
+        <div class="icon" style="background:rgba(249,115,22,.2)">🛠️</div>
+        Workshop: รัน Stack จริง
+      </div>
+      <p class="section-subtitle">ทำตามขั้นตอนนี้เพื่อรัน FastAPI + PostgreSQL + NATS บนเครื่องของคุณ</p>
+
+      <div class="workshop-steps">
+        <div class="ws-step">
+          <div class="ws-num">1</div>
+          <h4>Clone โปรเจกต์</h4>
+          <p>ดาวน์โหลด source code ลงเครื่อง</p>
+          <code>git clone &lt;repo-url&gt;<br/>cd SSD-Python-Starter-Template</code>
+        </div>
+        <div class="ws-step">
+          <div class="ws-num">2</div>
+          <h4>Build และรัน Stack</h4>
+          <p>Compose จะ build image และรัน 3 services</p>
+          <code>docker compose up --build</code>
+        </div>
+        <div class="ws-step">
+          <div class="ws-num">3</div>
+          <h4>ตรวจสอบ Logs</h4>
+          <p>ดูว่า migration รันสำเร็จและ API เริ่มทำงาน</p>
+          <code>docker compose logs -f api</code>
+        </div>
+        <div class="ws-step">
+          <div class="ws-num">4</div>
+          <h4>เปิด Swagger UI</h4>
+          <p>ทดสอบ API endpoints ผ่าน browser</p>
+          <code>http://localhost:8000/swagger</code>
+        </div>
+        <div class="ws-step">
+          <div class="ws-num">5</div>
+          <h4>ตรวจสอบ Health</h4>
+          <p>ดู readiness ของ API service</p>
+          <code>http://localhost:8000/health/ready</code>
+        </div>
+        <div class="ws-step">
+          <div class="ws-num">6</div>
+          <h4>หยุดและล้างข้อมูล</h4>
+          <p>หยุด stack และลบ volumes ทั้งหมด</p>
+          <code>docker compose down -v</code>
+        </div>
+      </div>
+
+      <div class="info-box tip" style="margin-top:20px">
+        <div class="icon-box">🔗</div>
+        <div class="content">
+          <strong>Endpoints ที่ใช้ได้</strong>
+          <p>
+            <a href="http://localhost:8000" style="color:var(--accent2)" target="_blank">http://localhost:8000</a> — Hello &nbsp;|&nbsp;
+            <a href="http://localhost:8000/swagger" style="color:var(--accent2)" target="_blank">http://localhost:8000/swagger</a> — Swagger UI &nbsp;|&nbsp;
+            <a href="http://localhost:8000/health/live" style="color:var(--accent2)" target="_blank">http://localhost:8000/health/live</a> — Liveness &nbsp;|&nbsp;
+            <a href="http://localhost:8000/health/ready" style="color:var(--accent2)" target="_blank">http://localhost:8000/health/ready</a> — Readiness
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         19. CHEATSHEET
+    ═══════════════════════════════════════ -->
+    <section class="section" id="cheatsheet">
+      <div class="section-title">
+        <div class="icon" style="background:rgba(6,182,212,.2)">📌</div>
+        Docker Compose Cheatsheet
+      </div>
+      <p class="section-subtitle">คำสั่งที่ใช้บ่อยสรุปไว้ในที่เดียว</p>
+
+      <div class="cheat-grid">
+        <div class="cheat-item"><div class="cheat-cmd">docker compose up --build</div><div class="cheat-desc">Build image ใหม่และรัน stack</div></div>
+        <div class="cheat-item"><div class="cheat-cmd">docker compose up -d</div><div class="cheat-desc">รัน stack ใน background</div></div>
+        <div class="cheat-item"><div class="cheat-cmd">docker compose down</div><div class="cheat-desc">หยุด stack (เก็บ volumes)</div></div>
+        <div class="cheat-item"><div class="cheat-cmd">docker compose down -v</div><div class="cheat-desc">หยุด stack + ลบ volumes</div></div>
+        <div class="cheat-item"><div class="cheat-cmd">docker compose logs -f</div><div class="cheat-desc">ดู logs แบบ real-time</div></div>
+        <div class="cheat-item"><div class="cheat-cmd">docker compose logs -f api</div><div class="cheat-desc">ดู logs เฉพาะ api service</div></div>
+        <div class="cheat-item"><div class="cheat-cmd">docker compose ps</div><div class="cheat-desc">ดูสถานะ services ทั้งหมด</div></div>
+        <div class="cheat-item"><div class="cheat-cmd">docker compose restart api</div><div class="cheat-desc">รีสตาร์ทเฉพาะ api service</div></div>
+        <div class="cheat-item"><div class="cheat-cmd">docker compose exec api sh</div><div class="cheat-desc">เข้า shell ใน api container</div></div>
+        <div class="cheat-item"><div class="cheat-cmd">docker compose pull</div><div class="cheat-desc">ดึง image ใหม่จาก registry</div></div>
+        <div class="cheat-item"><div class="cheat-cmd">docker volume ls</div><div class="cheat-desc">ดู volumes ทั้งหมด</div></div>
+        <div class="cheat-item"><div class="cheat-cmd">docker volume inspect postgres_data</div><div class="cheat-desc">ดูรายละเอียด volume</div></div>
+        <div class="cheat-item"><div class="cheat-cmd">docker network ls</div><div class="cheat-desc">ดู networks ทั้งหมด</div></div>
+        <div class="cheat-item"><div class="cheat-cmd">docker system prune -a</div><div class="cheat-desc">ล้าง images/containers ที่ไม่ใช้</div></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════
+         20. SUMMARY
+    ═══════════════════════════════════════ -->
+    <section class="section" id="summary">
+      <div class="section-title">
+        <div class="icon" style="background:linear-gradient(135deg,rgba(37,99,235,.3),rgba(6,182,212,.3))">🎯</div>
+        สรุปและ Next Steps
+      </div>
+      <p class="section-subtitle">สิ่งที่ได้เรียนรู้และแนวทางต่อไป</p>
+
+      <div class="card-grid">
+        <div class="card" style="border-color:rgba(59,130,246,.4)">
+          <h4 style="color:var(--accent2)">🐳 Docker</h4>
+          <ul>
+            <li>แยก environment ออกจาก host ได้สมบูรณ์</li>
+            <li>Build once, run anywhere</li>
+            <li>เร็วกว่าและเบากว่า VM</li>
+            <li>ใช้ slim image + non-root user</li>
+          </ul>
+        </div>
+        <div class="card" style="border-color:rgba(168,85,247,.4)">
+          <h4 style="color:var(--purple)">🔧 Docker Compose</h4>
+          <ul>
+            <li>จัดการ multi-service stack ใน 1 ไฟล์</li>
+            <li>depends_on + healthcheck ป้องกัน race condition</li>
+            <li>Network และ Volume อัตโนมัติ</li>
+            <li>Entrypoint script ทำ migration ก่อน start</li>
+          </ul>
+        </div>
+        <div class="card" style="border-color:rgba(234,179,8,.4)">
+          <h4 style="color:var(--yellow)">💾 Volume & Network</h4>
+          <ul>
+            <li>Named Volume เก็บข้อมูลถาวร</li>
+            <li>Services คุยกันผ่านชื่อ service</li>
+            <li>Port mapping เปิดให้ host เข้าถึง</li>
+            <li>Backup + restore สม่ำเสมอ</li>
+          </ul>
+        </div>
+        <div class="card" style="border-color:rgba(34,197,94,.4)">
+          <h4 style="color:var(--green)">☁️ Production</h4>
+          <ul>
+            <li>restart: unless-stopped + systemd</li>
+            <li>Nginx/Caddy เป็น reverse proxy</li>
+            <li>Auto-backup ด้วย cron job</li>
+            <li>ทดสอบ restore backup สม่ำเสมอ</li>
+          </ul>
+        </div>
+      </div>
+
+      <div style="margin-top:32px;background:linear-gradient(135deg,rgba(37,99,235,.1),rgba(6,182,212,.1));border:1px solid rgba(59,130,246,.3);border-radius:16px;padding:28px">
+        <h3 style="font-size:18px;margin-bottom:16px">🚀 Next Steps</h3>
+        <div class="card-grid" style="margin-top:0">
+          <div class="card" style="background:rgba(0,0,0,.3)">
+            <h4>📁 Clean Architecture</h4>
+            <p>ศึกษาโครงสร้าง <code style="color:var(--cyan)">app/</code> folder: domain, application, infrastructure layers</p>
+          </div>
+          <div class="card" style="background:rgba(0,0,0,.3)">
+            <h4>🗄️ Alembic Migrations</h4>
+            <p>เรียนรู้การสร้าง migration ใหม่และ rollback ด้วย <code style="color:var(--cyan)">uv run alembic</code></p>
+          </div>
+          <div class="card" style="background:rgba(0,0,0,.3)">
+            <h4>⚡ FastStream Events</h4>
+            <p>ทดลองเพิ่ม event publisher/consumer ผ่าน NATS broker</p>
+          </div>
+          <div class="card" style="background:rgba(0,0,0,.3)">
+            <h4>🧪 Testing</h4>
+            <p>รัน test suite ด้วย <code style="color:var(--cyan)">uv run pytest</code> และเพิ่ม test cases ใหม่</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </div><!-- /content -->
+</main><!-- /main -->
+
+<script>
+  // ── Copy code ──────────────────────────
+  function copyCode(btn) {
+    const pre = btn.closest('.code-block').querySelector('pre');
+    navigator.clipboard.writeText(pre.innerText).then(() => {
+      btn.textContent = 'Copied!';
+      btn.style.color = '#22c55e';
+      setTimeout(() => { btn.textContent = 'Copy'; btn.style.color = ''; }, 2000);
+    });
+  }
+
+  // ── Reading progress ──────────────────
+  const fill = document.getElementById('progress-fill');
+  window.addEventListener('scroll', () => {
+    const total = document.body.scrollHeight - window.innerHeight;
+    const pct = Math.min(100, (window.scrollY / total) * 100);
+    fill.style.width = pct + '%';
+  });
+
+  // ── Active nav link ───────────────────
+  const sections = document.querySelectorAll('.section');
+  const navLinks = document.querySelectorAll('#sidenav a');
+
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        navLinks.forEach(a => a.classList.remove('active'));
+        const id = entry.target.id;
+        const link = document.querySelector(`#sidenav a[href="#${id}"]`);
+        if (link) {
+          link.classList.add('active');
+          link.scrollIntoView({ block: 'nearest' });
+        }
+      }
+    });
+  }, { rootMargin: '-30% 0px -60% 0px' });
+
+  sections.forEach(s => observer.observe(s));
+</script>
+</body>
+</html>
